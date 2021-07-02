@@ -2,7 +2,7 @@ use std::fs;
 use std::error::Error;
 use bytemuck::{bytes_of, from_bytes_mut};
 
-use crystal_parser::*;
+use crystal_sav::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Arguments::parse()?;
