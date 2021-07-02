@@ -3,7 +3,6 @@ pub mod errors;
 
 /// find all offsets in `data` that match `target`
 /// indexes in `target` can be skipped to account for gaps
-/// note: index 0 should not be skipped! it will result in skiping.. actually skiping like this always happens - fix the code so when it stops a match chain it rechecks for a new chain with the first byte before continuing
 pub fn search_bytes(data: &[u8], target: &[u8], skip: &[usize]) -> Vec<usize> {
     let mut matched_index = 0;
     let mut matched_offsets = vec![];
