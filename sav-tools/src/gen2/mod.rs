@@ -1,4 +1,4 @@
-mod enums;
-mod structs;
+pub mod enums;
+pub mod structs;
 pub use enums::*;
 pub use structs::*;

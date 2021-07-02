@@ -9,7 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9966d2ab714d0f785dbac0a0396251a35280aeb42413281617d0209ab4898435"
 
 [[package]]
-name = "crystal-parser"
+name = "crystal-patch"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "sav-tools",
+]
+
+[[package]]
+name = "sav-tools"
 version = "0.1.0"
 dependencies = [
  "bytemuck",

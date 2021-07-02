@@ -1,27 +1,5 @@
-use std::env;
-
+pub mod gen2;
 pub mod errors;
-mod bindings;
-
-use errors::*;
-pub use bindings::*;
-
-pub struct Arguments {
-    pub sav_file: String
-}
-
-impl Arguments {
-    pub fn parse() -> Result<Arguments, ParserError> {
-        let mut args: Vec<String> = env::args().collect();
-
-        if args.len() != 2 {
-            return Err(ParserError::InvalidArguments);
-        }
-
-        let sav_file = args.remove(1);
-        Ok(Arguments { sav_file })
-    }
-}
 
 /// find all offsets in `data` that match `target`
 /// indexes in `target` can be skipped to account for gaps
