@@ -37,6 +37,6 @@ unsafe impl Pod for PartyPokemonData {}
 
 impl fmt::Display for PartyPokemonData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", PokemonSpecies::by_id(self.species))
+        write!(f, "{:?}", PokemonSpecies::from_id(self.species))
     }
 }
