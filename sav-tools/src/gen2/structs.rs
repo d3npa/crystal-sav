@@ -2,15 +2,17 @@ use crate::gen2::PokemonSpecies;
 use bytemuck::{Pod, Zeroable};
 use std::fmt;
 
+pub type NameString = [u8; 6];
+
 #[repr(C, packed)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct PartyPokemonData {
     pub species: u8,
     pub held_item: u8,
     pub moves: [u8; 4],
     pub trainer_id: [u8; 2],
     pub experience: [u8; 3],
-    pub hp_ev: [u8; 2],
+    pub hp_ev: u16,
     pub attack_ev: [u8; 2],
     pub defense_ev: [u8; 2],
     pub speed_ev: [u8; 2],
@@ -40,3 +42,16 @@ impl fmt::Display for PartyPokemonData {
         write!(f, "{:?}", PokemonSpecies::from_id(self.species))
     }
 }
+
+#[repr(C, packed)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PartyPokemonList {
+    pub count: u8,
+    pub species: [u8; 7],
+    pub pokemon: [PartyPokemonData; 6],
+    pub ot_names: [NameString; 6],
+    pub names: [NameString; 6],
+}
+
+unsafe impl Zeroable for PartyPokemonList {}
+unsafe impl Pod for PartyPokemonList {}
