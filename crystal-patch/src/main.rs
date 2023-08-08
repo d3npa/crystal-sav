@@ -104,7 +104,7 @@ fn find_team_data(sav_data: &[u8], player: &Player) {
         u16::to_le_bytes(player.id)[0],
     ];
     team.pokemon = [sample_pokemon; 6];
-    println!("{:?}", team);
+    // println!("{:?}", team);
     let team_bytes: [u8; total_size] = unsafe { std::mem::transmute(team) };
     let matches = sav_tools::search_bytes(&sav_data, &team_bytes, &{
         let mut ignore = Vec::new();
@@ -116,7 +116,7 @@ fn find_team_data(sav_data: &[u8], player: &Player) {
         ignore
     });
 
-    println!("{:?}", matches);
+    println!("{:#x?}", matches);
 
     for offset in matches {
         let mut team_bytes = [0u8; total_size];

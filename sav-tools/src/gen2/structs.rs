@@ -1,4 +1,4 @@
-use crate::gen2::PokemonSpecies;
+use crate::gen2::{Items, Moves, PokemonSpecies};
 use bytemuck::{Pod, Zeroable};
 use std::fmt;
 
@@ -12,7 +12,7 @@ pub struct PartyPokemonData {
     pub moves: [u8; 4],
     pub trainer_id: [u8; 2],
     pub experience: [u8; 3],
-    pub hp_ev: u16,
+    pub hp_ev: [u8; 2],
     pub attack_ev: [u8; 2],
     pub defense_ev: [u8; 2],
     pub speed_ev: [u8; 2],
@@ -39,7 +39,20 @@ unsafe impl Pod for PartyPokemonData {}
 
 impl fmt::Display for PartyPokemonData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", PokemonSpecies::from_id(self.species))
+        write!(
+            f,
+            "{:?} lvl. {} {}{:?}",
+            PokemonSpecies::from_id(self.species),
+            self.level,
+            {
+                if self.held_item != 0 {
+                    format!("holding {:?} ", Items::from_id(self.held_item))
+                } else {
+                    "".to_string()
+                }
+            },
+            self.moves.map(|id| Moves::from_id(id)),
+        )
     }
 }
 
