@@ -13,50 +13,82 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut sav_data = fs::read(sav_file)?;
     println!("Read in {} bytes from '{}'", sav_data.len(), sav_file);
 
-    println!("Searching for party pokemon data matching Chikorita");
+    let player = Player {
+        name: [0xcb, 0x3b, 0xb7, 0x50, 0x00, 0x00],
+        id: 25916,
+    };
+
+//    let team = find_team_data(&bytes, &player);
+    
+
+    println!("Searching for first party pokemon data");
     let offsets = search_bytes(
         &sav_data, 
-        &chikorita_header(), 
+        &pokemon_header(), 
         &vec![1, 2, 3, 4, 5],
     );
     println!("Found {} matches at offsets {:x?}", offsets.len(), offsets);
 
-    for offset in offsets {
-        let mut bytes = [0; 48];
-        for i in 0..48 {
-            bytes[i] = sav_data[offset+i];
-        }
+    let offset = &offsets[1];
 
-        let mut chikorita = from_bytes_mut::<PartyPokemonData>(&mut bytes);
-        chikorita.held_item = 6;
-        chikorita.iv_data[0] &= 31; // & 0b00011111 i.e. set attack IV to 1 
-        println!("[{:x}] {:x?}", offset, chikorita);
+        // // for offset in offsets {
+    //     let mut bytes = [0; 48];
+    //     for i in 0..48 {
+    //         bytes[i] = sav_data[offset+j*48+i];
+    //     }
 
-        let bytes = bytes_of::<PartyPokemonData>(&chikorita);
-        for i in 0..48 {
-            sav_data[offset+i] = bytes[i];
-        }
-    }
+    //     let mut chikorita = from_bytes_mut::<PartyPokemonData>(&mut bytes);
+    //     // chikorita.held_item = 6;
+    //     // chikorita.iv_data[0] &= 31; // & 0b00011111 i.e. set attack IV to 1 
+    //     println!("[{:x}] {} {:?}\n", offset+j*48, chikorita, chikorita);
+
+    //     // let bytes = bytes_of::<PartyPokemonData>(&chikorita);
+    //     // for i in 0..48 {
+    //     //     sav_data[offset+i] = bytes[i];
+    //     // }
+    // }
 
     // fs::write(sav_file, sav_data)?;
 
     Ok(())
 }
 
-fn chikorita_header() -> Vec<u8> {
-    // hacky - find chikorita
+struct Player {
+    name: [u8; 6],
+    id: u16,
+}
+
+fn pokemon_header() -> Vec<u8> {
+    // hacky - find my pokemon
     let trainer_id: u16 = 25916;
-    let experience: u32 = 2408;
-    let my_chikorita: Vec<u8> = vec![
-        0x98, // species index number
+    let my_pokemon: Vec<u8> = vec![
+        92, // species index number
         00, // held item index number - skip
         00, 00, 00, 00, // move ids - skip
         u16::to_le_bytes(trainer_id)[1],
         u16::to_le_bytes(trainer_id)[0],
-        u32::to_le_bytes(experience)[2],
-        u32::to_le_bytes(experience)[1],
-        u32::to_le_bytes(experience)[0],
     ];
 
-    my_chikorita
+    my_pokemon
+}
+
+fn find_team_data() {
+    /*
+    
+    there may be many results if just searching for player's name
+    but it may be possible to do an incremental search, peeking at the following bytes to filter. for example, team data has the player name followed by a terminator, then a 1 or 0 for custom moves, then depending on that byte, a number of pokemon structures followed by a terminator 0xFF. 
+
+    this should be possible to 絞り込む with a more advanced search function!
+
+    https://bulbapedia.bulbagarden.net/wiki/Trainer_data_structure_(Generation_II)
+
+    */
+
+}
+
+/// Registers a new pokemon to the party
+fn add_pokemon_to_party() {
+    /*
+        needs to patch (at least) the trainer data, party data, and pokedex completion data
+    */
 }

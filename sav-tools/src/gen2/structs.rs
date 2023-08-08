@@ -1,4 +1,6 @@
+use crate::gen2::PokemonSpecies;
 use bytemuck::{Pod, Zeroable};
+use std::fmt;
 
 #[repr(C, packed)]
 #[derive(Clone, Copy, Debug)]
@@ -32,3 +34,9 @@ pub struct PartyPokemonData {
 
 unsafe impl Zeroable for PartyPokemonData {}
 unsafe impl Pod for PartyPokemonData {}
+
+impl fmt::Display for PartyPokemonData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", PokemonSpecies::by_id(self.species))
+    }
+}
