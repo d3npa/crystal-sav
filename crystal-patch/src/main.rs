@@ -14,20 +14,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Read in {} bytes from '{}'", sav_data.len(), sav_file);
 
     let player = Player {
-        name: [0xcb, 0x3b, 0xb7, 0x50, 0x00, 0x00],
+        name: [0xcb, 0x3b, 0xb7, 0x50, 0x50, 0xff],
         id: 25916,
     };
 
-    let team = find_team_data(&sav_data, &player);
+    let money: &[u8; 3] = &[0x00, 0x07, 0xc5]; // 1989 (big endian)
+    let offsets = search_bytes(&sav_data, money, &[]);
+    println!("{:x?}", offsets);
 
-    // println!("Searching for first party pokemon data");
-    // let offsets = search_bytes(
-    //     &sav_data,
-    //     &pokemon_header(),
-    //     &vec![1, 2, 3, 4, 5],
-    // );
-    // println!("Found {} matches at offsets {:x?}", offsets.len(), offsets);
+    let palette = find_player_color(&mut sav_data, 1989);
+    *palette = PlayerColor::Gray as u8; // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Player_palette
 
+    println!("{}", palette);
+
+    // let team = find_team_data(&sav_data, &player);
+
+    // 備忘録のために残し
     // // for offset in offsets {
     //     let mut bytes = [0; 48];
     //     for i in 0..48 {
@@ -45,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     //     // }
     // }
 
-    // fs::write(sav_file, sav_data)?;
+    fs::write(sav_file, sav_data)?;
 
     Ok(())
 }
@@ -55,43 +57,42 @@ struct Player {
     id: u16,
 }
 
-fn pokemon_header() -> Vec<u8> {
-    // hacky - find my pokemon
-    let trainer_id: u16 = 25916;
-    let my_pokemon: Vec<u8> = vec![
-        PokemonSpecies::Eevee.id(), // species index number
-        00,                         // held item index number - skip
-        00,                         // move ids - skip
-        00,
-        00,
-        00,
-        u16::to_le_bytes(trainer_id)[1],
-        u16::to_le_bytes(trainer_id)[0],
-    ];
+#[derive(Copy, Clone, Debug)]
+pub enum PlayerColor {
+    Red = 0,
+    Blue = 1,
+    Green = 2,
+    Brown = 3,
+    Orange = 4,
+    Gray = 5,
+    DarkGreen = 6,
+    DarkRed = 7,
+}
 
-    my_pokemon
+/// note: money is a 3-byte unsigned value (u24) thus must be under 1<<24
+fn find_player_color<'a>(sav_data: &'a mut [u8], money: u32) -> &'a mut u8 {
+    assert!(money < 1 << 24); // money is a 3-byte value
+    let money = money.to_be_bytes()[1..].to_owned();
+    let money_offset = {
+        search_bytes(&sav_data, &money, &[])
+            .pop()
+            .expect("money not found")
+    };
+    // https://archives.glitchcity.info/forums/board-76/thread-1342/page-0.html
+    let money_to_palette_rel_offset = 0xd84e - 0xd4dc;
+    let palette = &mut sav_data[&money_offset - money_to_palette_rel_offset];
+    palette
 }
 
 fn find_team_data(sav_data: &[u8], player: &Player) {
     /*
-    there may be many results if just searching for player's name but it may
-    be possible to do an incremental search, peeking at the following bytes
-    to filter.
-
-    for example, team data has the player name followed by a terminator, then
-    a 1 or 0 for custom moves, then depending on that byte, a number of
-    pokemon structures followed by a terminator 0xFF.
-
-    this should be possible to 絞り込む with a more advanced search function!
-
-    https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Pok.C3.A9mon_lists
-
+        https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Pok.C3.A9mon_lists
     */
     let count = 6;
     let capacity = 6;
     let entry_size = 48;
     const total_size: usize = 6 * (48 + 13) + 2;
-    let ot_name = [0xcb, 0x3b, 0xb7, 0x50, 0x50, 0xff]; // all hibiki's pokemon
+    let ot_name = player.name;
 
     // make a Team struct, default it, then config the values u can, and ignore the ranges udk
     let mut team = PartyPokemonList::default();
