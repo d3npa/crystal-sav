@@ -1,4 +1,4 @@
-use bytemuck::{bytes_of, from_bytes_mut};
+// use bytemuck::{bytes_of, from_bytes_mut};
 use std::error::Error;
 use std::fs;
 
@@ -23,11 +23,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("{:x?}", offsets);
 
     let palette = find_player_color(&mut sav_data, 1989);
-    *palette = PlayerColor::Gray as u8; // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Player_palette
+    *palette = PlayerColor::Gray as u8;
 
     println!("{}", palette);
 
-    // let team = find_team_data(&sav_data, &player);
+    /* let team = */
+    find_team_data(&sav_data, &player);
 
     // 備忘録のために残し
     // // for offset in offsets {
@@ -52,11 +53,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[allow(unused)]
 struct Player {
     name: [u8; 6],
     id: u16,
 }
 
+/// https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Player_palette
 #[derive(Copy, Clone, Debug)]
 pub enum PlayerColor {
     Red = 0,
@@ -87,17 +90,16 @@ fn find_player_color<'a>(sav_data: &'a mut [u8], money: u32) -> &'a mut u8 {
 fn find_team_data(sav_data: &[u8], player: &Player) {
     /*
         https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Pok.C3.A9mon_lists
-    */
     let count = 6;
     let capacity = 6;
     let entry_size = 48;
-    const total_size: usize = 6 * (48 + 13) + 2;
-    let ot_name = player.name;
+    */
+    const TOTAL_SIZE: usize = 6 * (48 + 13) + 2;
 
     // make a Team struct, default it, then config the values u can, and ignore the ranges udk
     let mut team = PartyPokemonList::default();
     team.count = 6;
-    // team.ot_names = [ot_name; 6];
+    // team.ot_names = [player.name; 6];
     team.species[6] = 0xff;
     let mut sample_pokemon = PartyPokemonData::default();
     sample_pokemon.trainer_id = [
@@ -106,7 +108,7 @@ fn find_team_data(sav_data: &[u8], player: &Player) {
     ];
     team.pokemon = [sample_pokemon; 6];
     // println!("{:?}", team);
-    let team_bytes: [u8; total_size] = unsafe { std::mem::transmute(team) };
+    let team_bytes: [u8; TOTAL_SIZE] = unsafe { std::mem::transmute(team) };
     let matches = sav_tools::search_bytes(&sav_data, &team_bytes, &{
         let mut ignore = Vec::new();
         for i in 0..team_bytes.len() {
@@ -120,8 +122,8 @@ fn find_team_data(sav_data: &[u8], player: &Player) {
     println!("{:#x?}", matches);
 
     for offset in matches {
-        let mut team_bytes = [0u8; total_size];
-        for i in 0..total_size {
+        let mut team_bytes = [0u8; TOTAL_SIZE];
+        for i in 0..TOTAL_SIZE {
             team_bytes[i] = sav_data[offset + i];
         }
         let team: PartyPokemonList = unsafe { std::mem::transmute(team_bytes) };
@@ -133,9 +135,9 @@ fn find_team_data(sav_data: &[u8], player: &Player) {
     }
 }
 
-/// Registers a new pokemon to the party
-fn add_pokemon_to_party() {
-    /*
-        needs to patch (at least) the trainer data, party data, and pokedex completion data
-    */
-}
+// /// Registers a new pokemon to the party
+// fn add_pokemon_to_party() {
+//     /*
+//         needs to patch (at least) the trainer data, party data, and pokedex completion data
+//     */
+// }

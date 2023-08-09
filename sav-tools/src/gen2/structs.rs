@@ -1,5 +1,4 @@
 use crate::gen2::{Items, Moves, PokemonSpecies};
-use bytemuck::{Pod, Zeroable};
 use std::fmt;
 
 pub type NameString = [u8; 6];
@@ -34,9 +33,6 @@ pub struct PartyPokemonData {
     pub special_defense: [u8; 2],
 }
 
-unsafe impl Zeroable for PartyPokemonData {}
-unsafe impl Pod for PartyPokemonData {}
-
 impl fmt::Display for PartyPokemonData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -65,6 +61,3 @@ pub struct PartyPokemonList {
     pub ot_names: [NameString; 6],
     pub names: [NameString; 6],
 }
-
-unsafe impl Zeroable for PartyPokemonList {}
-unsafe impl Pod for PartyPokemonList {}
