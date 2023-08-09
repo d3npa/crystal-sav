@@ -20,14 +20,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         id: 25916,
     };
 
-    let money: &[u8; 3] = &[0x00, 0x07, 0xc5]; // 1989 (big endian)
-    let offsets = search_bytes(&sav_data, money, &[]);
-    println!("{:x?}", offsets);
-
-    let palette = find_player_color(&mut sav_data, 1989);
-    *palette = PlayerColor::Gray as u8;
-
-    println!("{}", palette);
+    let palette = find_player_color(&mut sav_data, 18207);
+    println!("Previous Color: {:?}", palette);
+    *palette = PlayerColor::Gray;
+    println!("New Color: {:?}", palette);
 
     /* let team = */
     let team: &mut PartyPokemonList = find_team_data(&mut sav_data, &player);
@@ -71,6 +67,7 @@ struct Player {
 }
 
 /// https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_II)#Player_palette
+#[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum PlayerColor {
     Red = 0,
@@ -84,7 +81,7 @@ pub enum PlayerColor {
 }
 
 /// note: money is a 3-byte unsigned value (u24) thus must be under 1<<24
-fn find_player_color<'a>(sav_data: &'a mut [u8], money: u32) -> &'a mut u8 {
+fn find_player_color<'a>(sav_data: &'a mut [u8], money: u32) -> &'a mut PlayerColor {
     assert!(money < 1 << 24); // money is a 3-byte value
     let money = money.to_be_bytes()[1..].to_owned();
     let money_offset = {
@@ -94,8 +91,8 @@ fn find_player_color<'a>(sav_data: &'a mut [u8], money: u32) -> &'a mut u8 {
     };
     // https://archives.glitchcity.info/forums/board-76/thread-1342/page-0.html
     let money_to_palette_rel_offset = 0xd84e - 0xd4dc;
-    let palette = &mut sav_data[&money_offset - money_to_palette_rel_offset];
-    palette
+    let palette = &mut sav_data[money_offset - money_to_palette_rel_offset];
+    unsafe { &mut *(palette as *mut u8 as *mut PlayerColor) }
 }
 
 fn find_team_data<'a>(sav_data: &'a mut [u8], player: &Player) -> &'a mut PartyPokemonList {
